@@ -1,0 +1,20 @@
+{
+  "name": "self-editing",
+  "version": "1.0.0",
+  "description": "- Ultra minimal HTML - no unnecessary tags\r - Direct text content, no fluff\r - No JavaScript - use htmx for DOM manipulation\r - Web-based applications only - no native executables\r - Simple, brutal, direct\r - No frameworks unless absolutely necessary\r - Raw HTML, raw CSS, minimal dependencies",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0"
+  }
+}

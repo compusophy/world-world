@@ -1,1 +1,38 @@
-hello world2
+<!DOCTYPE html>
+<html>
+<head>
+    <title>world-world editor</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <h1>world-world</h1>
+
+    <form hx-post="/auth" hx-target="#status" hx-swap="innerHTML">
+        <input type="password" name="token" placeholder="github token">
+        <button type="submit">connect</button>
+        <button type="button" hx-post="/test-token" hx-target="#status" hx-swap="innerHTML">test token</button>
+    </form>
+
+    <form hx-post="/commit" hx-target="#status" hx-swap="innerHTML">
+        <textarea name="content" rows="10" cols="50">hello world</textarea>
+        <br>
+        <button type="submit">commit change</button>
+    </form>
+
+    <form hx-post="/create-pr" hx-target="#status" hx-swap="innerHTML">
+        <input type="text" name="title" placeholder="pr title">
+        <br>
+        <textarea name="body" placeholder="pr description"></textarea>
+        <br>
+        <input type="hidden" name="content" value="">
+        <button type="submit" onclick="this.form.content.value = document.querySelector('textarea[name=content]').value">create pr</button>
+    </form>
+
+    <div id="prs-section">
+        <button hx-get="/prs" hx-target="#prs-list" hx-swap="innerHTML">load prs</button>
+        <div id="prs-list"></div>
+    </div>
+
+    <div id="status"></div>
+</body>
+</html>
