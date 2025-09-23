@@ -13,11 +13,21 @@
         <button type="button" hx-post="/test-token" hx-target="#status" hx-swap="innerHTML">test token</button>
     </form>
 
-    <form hx-post="/commit" hx-target="#status" hx-swap="innerHTML">
-        <textarea name="content" rows="10" cols="50">hello world</textarea>
-        <br>
-        <button type="submit">commit change</button>
-    </form>
+    <div id="file-browser">
+        <button hx-get="/files" hx-target="#file-list" hx-swap="innerHTML">load repository files</button>
+        <div id="file-list"></div>
+    </div>
+
+    <div id="editor-section" style="display:none;">
+        <h3 id="current-file">Editing: </h3>
+        <form hx-post="/commit" hx-target="#status" hx-swap="innerHTML">
+            <input type="hidden" name="filePath" id="current-file-path">
+            <input type="hidden" name="sha" id="current-file-sha">
+            <textarea name="content" id="file-content" rows="20" cols="80"></textarea>
+            <br>
+            <button type="submit">commit change</button>
+        </form>
+    </div>
 
     <form hx-post="/create-pr" hx-target="#status" hx-swap="innerHTML">
         <input type="text" name="title" placeholder="pr title">
@@ -25,7 +35,11 @@
         <textarea name="body" placeholder="pr description"></textarea>
         <br>
         <input type="hidden" name="content" value="">
-        <button type="submit" onclick="this.form.content.value = document.querySelector('textarea[name=content]').value">create pr</button>
+        <input type="hidden" name="filePath" value="">
+        <button type="submit" onclick="
+            this.form.content.value = document.getElementById('file-content').value;
+            this.form.filePath.value = document.getElementById('current-file-path').value;
+        ">create pr</button>
     </form>
 
     <div id="prs-section">
@@ -34,5 +48,33 @@
     </div>
 
     <div id="status"></div>
+
+    <script>
+        async function loadFile(filePath) {
+            try {
+                const response = await fetch(`/file/${encodeURIComponent(filePath)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('status').innerHTML = `<p>Error: ${data.error}</p>`;
+                    return;
+                }
+
+                // Show editor section
+                document.getElementById('editor-section').style.display = 'block';
+
+                // Set file info
+                document.getElementById('current-file').textContent = `Editing: ${filePath}`;
+                document.getElementById('current-file-path').value = filePath;
+                document.getElementById('current-file-sha').value = data.sha;
+                document.getElementById('file-content').value = data.content;
+
+                document.getElementById('status').innerHTML = `<p>Loaded ${filePath}</p>`;
+
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<p>Error loading file: ${error.message}</p>`;
+            }
+        }
+    </script>
 </body>
 </html>

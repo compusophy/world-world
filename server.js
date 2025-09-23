@@ -59,28 +59,32 @@ app.post('/test-token', async (req, res) => {
 // Commit endpoint
 app.post('/commit', async (req, res) => {
     try {
-        const { content } = req.body;
+        const { content, filePath, sha } = req.body;
 
         if (!githubToken) {
             return res.json({ error: 'GitHub not authenticated' });
         }
 
-        // Get current file
-        const getResponse = await fetch('https://api.github.com/repos/compusophy/world-world/contents/index.html', {
-            headers: {
-                'Authorization': `token ${githubToken}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
+        // Get current file if sha not provided
+        let currentSha = sha;
+        if (!currentSha) {
+            const getResponse = await fetch(`https://api.github.com/repos/compusophy/world-world/contents/${encodeURIComponent(filePath || 'index.html')}`, {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
 
-        if (!getResponse.ok) {
-            throw new Error(`Failed to get file: ${getResponse.statusText}`);
+            if (!getResponse.ok) {
+                throw new Error(`Failed to get file: ${getResponse.statusText}`);
+            }
+
+            const currentFile = await getResponse.json();
+            currentSha = currentFile.sha;
         }
 
-        const currentFile = await getResponse.json();
-
         // Update file
-        const updateResponse = await fetch('https://api.github.com/repos/compusophy/world-world/contents/index.html', {
+        const updateResponse = await fetch(`https://api.github.com/repos/compusophy/world-world/contents/${encodeURIComponent(filePath || 'index.html')}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${githubToken}`,
@@ -88,9 +92,9 @@ app.post('/commit', async (req, res) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: 'Update from web editor',
+                message: `Update ${filePath || 'index.html'} from web editor`,
                 content: Buffer.from(content).toString('base64'),
-                sha: currentFile.sha
+                sha: currentSha
             })
         });
 
@@ -111,7 +115,7 @@ app.post('/commit', async (req, res) => {
 // Create PR endpoint
 app.post('/create-pr', async (req, res) => {
     try {
-        const { title, body, content } = req.body;
+        const { title, body, content, filePath } = req.body;
 
         if (!githubToken) {
             return res.json({ error: 'GitHub not authenticated' });
@@ -155,7 +159,7 @@ app.post('/create-pr', async (req, res) => {
         }
 
         // Commit changes to the new branch
-        const getResponse = await fetch('https://api.github.com/repos/compusophy/world-world/contents/index.html', {
+        const getResponse = await fetch(`https://api.github.com/repos/compusophy/world-world/contents/${encodeURIComponent(filePath || 'index.html')}`, {
             headers: {
                 'Authorization': `token ${githubToken}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -169,7 +173,7 @@ app.post('/create-pr', async (req, res) => {
 
         const currentFile = await getResponse.json();
 
-        const updateResponse = await fetch('https://api.github.com/repos/compusophy/world-world/contents/index.html', {
+        const updateResponse = await fetch(`https://api.github.com/repos/compusophy/world-world/contents/${encodeURIComponent(filePath || 'index.html')}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${githubToken}`,
@@ -255,6 +259,96 @@ app.post('/merge-pr', async (req, res) => {
 
         const mergeResult = await mergeResponse.json();
         res.json({ success: `PR #${prNumber} merged successfully!` });
+
+    } catch (error) {
+        console.error(error);
+        res.json({ error: error.message });
+    }
+});
+
+// List repository files endpoint
+app.get('/files', async (req, res) => {
+    try {
+        if (!githubToken) {
+            return res.send('<p>GitHub not authenticated</p>');
+        }
+
+        const filesResponse = await fetch('https://api.github.com/repos/compusophy/world-world/contents', {
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (!filesResponse.ok) {
+            const errorText = await filesResponse.text();
+            return res.send(`<p>Error loading files: ${filesResponse.status} ${filesResponse.statusText}</p>`);
+        }
+
+        const files = await filesResponse.json();
+
+        if (files.length === 0) {
+            return res.send('<p>No files in repository</p>');
+        }
+
+        let html = '<h3>Repository Files</h3>';
+        files.forEach(file => {
+            if (file.type === 'file') {
+                html += `
+                    <div style="margin:5px;">
+                        <a href="#" onclick="loadFile('${file.path}'); return false;" style="text-decoration:none;">
+                            📄 ${file.name}
+                        </a>
+                    </div>
+                `;
+            } else if (file.type === 'dir') {
+                html += `
+                    <div style="margin:5px;">
+                        📁 ${file.name}/
+                    </div>
+                `;
+            }
+        });
+
+        res.send(html);
+
+    } catch (error) {
+        console.error(error);
+        res.send(`<p>Error: ${error.message}</p>`);
+    }
+});
+
+// Load file content endpoint
+app.get('/file/*', async (req, res) => {
+    try {
+        const filePath = req.params[0];
+
+        if (!githubToken) {
+            return res.json({ error: 'GitHub not authenticated' });
+        }
+
+        const fileResponse = await fetch(`https://api.github.com/repos/compusophy/world-world/contents/${encodeURIComponent(filePath)}`, {
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (!fileResponse.ok) {
+            const errorText = await fileResponse.text();
+            return res.json({ error: `Failed to load file: ${fileResponse.status} ${fileResponse.statusText} - ${errorText}` });
+        }
+
+        const fileData = await fileResponse.json();
+
+        // Decode base64 content
+        const content = Buffer.from(fileData.content, 'base64').toString('utf-8');
+
+        res.json({
+            content: content,
+            path: filePath,
+            sha: fileData.sha
+        });
 
     } catch (error) {
         console.error(error);
