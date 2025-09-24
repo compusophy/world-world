@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, '..')));
 
 // Simple favicon handler
 app.get('/favicon.ico', (req, res) => {
@@ -405,12 +405,10 @@ app.get('/prs', async (req, res) => {
     }
 });
 
-// Export for Vercel deployment
-module.exports = app;
+// Serve index.html for root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
-// Only start server if not running on Vercel
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`world-world editor running on port ${PORT}`);
-    });
-}
+// Export the Express app for Vercel
+module.exports = app;
