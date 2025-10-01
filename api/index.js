@@ -75,15 +75,27 @@ app.post('/commit', async (req, res) => {
                 }
             });
 
-            if (!getResponse.ok) {
+            // If file exists, get its SHA. If not (404), we'll create a new file
+            if (getResponse.ok) {
+                const currentFile = await getResponse.json();
+                currentSha = currentFile.sha;
+            } else if (getResponse.status !== 404) {
                 throw new Error(`Failed to get file: ${getResponse.statusText}`);
             }
-
-            const currentFile = await getResponse.json();
-            currentSha = currentFile.sha;
+            // If 404, currentSha stays undefined, which means we're creating a new file
         }
 
-        // Update file
+        // Create or update file
+        const requestBody = {
+            message: currentSha ? `Update ${filePath || 'index.html'} from web editor` : `Create ${filePath || 'index.html'} from web editor`,
+            content: content // Content is already base64 from the frontend
+        };
+        
+        // Only include SHA if updating existing file
+        if (currentSha) {
+            requestBody.sha = currentSha;
+        }
+
         const updateResponse = await fetch(`https://api.github.com/repos/compusophy/world-world/contents/${encodeURIComponent(filePath || 'index.html')}`, {
             method: 'PUT',
             headers: {
@@ -91,11 +103,7 @@ app.post('/commit', async (req, res) => {
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                message: `Update ${filePath || 'index.html'} from web editor`,
-                content: Buffer.from(content).toString('base64'),
-                sha: currentSha
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!updateResponse.ok) {
