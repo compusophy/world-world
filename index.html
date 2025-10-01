@@ -55,11 +55,12 @@
 
     <hr>
     <h3>OG Image Generator</h3>
-    <input type="text" id="og-text" placeholder="Enter text for image" value="world-world">
-    <button onclick="generateOGImage()">generate preview</button>
-    <button onclick="uploadOGImage()">upload to github</button>
+    <input type="text" id="og-text" placeholder="Enter text for image" value="world-world" oninput="updateOGPreview()">
     <br>
-    <canvas id="og-canvas" width="600" height="400" style="border:1px solid #ccc; margin:10px 0;"></canvas>
+    <img id="og-preview" width="600" height="400" style="border:1px solid #ccc; margin:10px 0;" src="/img?text=world-world" alt="OG Image Preview">
+    <br>
+    <p>Image URL: <code id="og-url">https://world-world.vercel.app/img?text=world-world</code></p>
+    <p style="color:#888; font-size:12px;">Image updates automatically as you type. No upload needed!</p>
 
     <div id="status"></div>
 
@@ -90,67 +91,15 @@
             }
         }
 
-        function generateOGImage() {
-            const canvas = document.getElementById('og-canvas');
-            const ctx = canvas.getContext('2d');
+        function updateOGPreview() {
             const text = document.getElementById('og-text').value || 'world-world';
-
-            // Clear canvas
-            ctx.clearRect(0, 0, 600, 400);
-
-            // Background gradient
-            const gradient = ctx.createLinearGradient(0, 0, 600, 400);
-            gradient.addColorStop(0, '#111');
-            gradient.addColorStop(1, '#333');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 600, 400);
-
-            // Title text (dynamic)
-            ctx.font = 'bold 48px Arial';
-            ctx.fillStyle = '#00ffaa';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, 300, 180);
-
-            // Subtitle
-            ctx.font = '24px Arial';
-            ctx.fillStyle = '#888';
-            ctx.fillText('Edit GitHub repos on the go', 300, 240);
-
-            document.getElementById('status').innerHTML = '<p>✅ Image generated! Change the text and click generate again, or upload to GitHub.</p>';
-        }
-
-        async function uploadOGImage() {
-            const canvas = document.getElementById('og-canvas');
-            const status = document.getElementById('status');
+            const encoded = encodeURIComponent(text);
+            const url = `/img?text=${encoded}`;
+            const fullUrl = `https://world-world.vercel.app/img?text=${encoded}`;
             
-            status.innerHTML = '<p>Saving image...</p>';
-
-            // Convert to JPEG
-            canvas.toBlob(async (blob) => {
-                try {
-                    const formData = new FormData();
-                    formData.append('image', blob, 'og-image.jpg');
-                    
-                    const response = await fetch('/save-image', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const result = await response.json();
-                    if (result.error) {
-                        status.innerHTML = `<p>Error: ${result.error}</p>`;
-                    } else {
-                        status.innerHTML = `<p>✅ Image saved!<br>URL: https://world-world.vercel.app/img?v=${Date.now()}</p>`;
-                    }
-                } catch (error) {
-                    status.innerHTML = `<p>Error: ${error.message}</p>`;
-                }
-            }, 'image/jpeg', 0.8);
+            document.getElementById('og-preview').src = url;
+            document.getElementById('og-url').textContent = fullUrl;
         }
-
-        // Generate initial preview on load
-        window.addEventListener('load', generateOGImage);
     </script>
     
     <!-- Farcaster Mini App SDK -->

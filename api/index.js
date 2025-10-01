@@ -1,18 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure multer for file uploads
-const upload = multer({ storage: multer.memoryStorage() });
-
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..')));
 
 // Simple favicon handler
@@ -418,41 +413,32 @@ app.get('/prs', async (req, res) => {
     }
 });
 
-// Save image endpoint
-app.post('/save-image', upload.single('image'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.json({ error: 'No image provided' });
-        }
-
-        const publicDir = path.join(__dirname, '..', 'public');
-        if (!fs.existsSync(publicDir)) {
-            fs.mkdirSync(publicDir, { recursive: true });
-        }
-
-        const imagePath = path.join(publicDir, 'og-image.jpg');
-        fs.writeFileSync(imagePath, req.file.buffer);
-
-        res.json({ success: 'Image saved successfully!' });
-    } catch (error) {
-        console.error(error);
-        res.json({ error: error.message });
-    }
-});
-
-// Serve OG image with no-cache headers
+// Generate OG image on-demand
 app.get('/img', (req, res) => {
-    const imagePath = path.join(__dirname, '..', 'public', 'og-image.jpg');
+    const text = req.query.text || 'world-world';
     
-    if (fs.existsSync(imagePath)) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        res.setHeader('Content-Type', 'image/jpeg');
-        res.sendFile(imagePath);
-    } else {
-        res.status(404).send('Image not found');
-    }
+    // We'll generate this server-side using canvas (node-canvas)
+    // For now, redirect to a static placeholder
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    // Simple SVG placeholder for now
+    const svg = `
+    <svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#111;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#333;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+        <rect width="600" height="400" fill="url(#grad)" />
+        <text x="300" y="180" font-family="Arial" font-size="48" font-weight="bold" fill="#00ffaa" text-anchor="middle">${text}</text>
+        <text x="300" y="240" font-family="Arial" font-size="24" fill="#888" text-anchor="middle">Edit GitHub repos on the go</text>
+    </svg>`;
+    
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(svg);
 });
 
 // Serve index.html for root route

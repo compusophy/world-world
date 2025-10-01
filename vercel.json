@@ -44,10 +44,6 @@
       "dest": "/api/index.js"
     },
     {
-      "src": "/save-image",
-      "dest": "/api/index.js"
-    },
-    {
       "src": "/img",
       "dest": "/api/index.js"
     },
