@@ -2,11 +2,12 @@
 <html>
 <head>
     <title>world-world editor</title>
-
+    
     <!-- Farcaster Mini App Meta Tags -->
-    <!-- Note: You need to create og-image.png (3:2 ratio) and logo.png (200x200) -->
-    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://wrpcd.net/cdn-cgi/imagedelivery/BXluQx4ige9GuW0Ia56BHw/07fa2a40-620c-4eef-7607-8d2d0d972900/anim=false,fit=contain,f=auto,w=576","button":{"title":"Open World-World Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://wrpcd.net/cdn-cgi/imagedelivery/BXluQx4ige9GuW0Ia56BHw/07fa2a40-620c-4eef-7607-8d2d0d972900/anim=false,fit=contain,f=auto,w=576","splashBackgroundColor":"#f0f0f0"}}}' />
-
+    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://world-world.vercel.app/api/og","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://world-world.vercel.app/api/og","splashBackgroundColor":"#111111"}}}' />
+    <!-- For backward compatibility -->
+    <meta name="fc:frame" content='{"version":"1","imageUrl":"https://world-world.vercel.app/api/og","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://world-world.vercel.app/api/og","splashBackgroundColor":"#111111"}}}' />
+    
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 <body>
@@ -81,12 +82,12 @@
             }
         }
     </script>
-
-    <!-- Farcaster Mini App SDK script -->
+    
+    <!-- Farcaster Mini App SDK -->
     <script type="module">
-      import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk'
-      // Notify the Farcaster client that the Mini App is ready
-      await sdk.actions.ready()
+        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk'
+        // Notify the Farcaster client that the Mini App is ready
+        await sdk.actions.ready()
     </script>
 </body>
 </html>
