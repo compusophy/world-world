@@ -410,5 +410,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
+// Catch-all handler for static files and SPA routing
+app.get('*', (req, res) => {
+    // Check if it's a request for an HTML file
+    if (req.path.endsWith('.html')) {
+        const filePath = path.join(__dirname, '..', req.path);
+        res.sendFile(filePath);
+    } else {
+        // For any other route, serve index.html (SPA fallback)
+        res.sendFile(path.join(__dirname, '..', 'index.html'));
+    }
+});
+
 // Export the Express app for Vercel
 module.exports = app;
