@@ -54,6 +54,10 @@
         <div id="prs-list"></div>
     </div>
 
+    <hr>
+    <h3>OG Image Generator</h3>
+    <button onclick="generateAndUploadOGImage()">generate & upload og-image.png</button>
+
     <div id="status"></div>
 
     <script>
@@ -80,6 +84,61 @@
 
             } catch (error) {
                 document.getElementById('status').innerHTML = `<p>Error loading file: ${error.message}</p>`;
+            }
+        }
+
+        async function generateAndUploadOGImage() {
+            const status = document.getElementById('status');
+            status.innerHTML = '<p>Generating image...</p>';
+
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 600, 400);
+            gradient.addColorStop(0, '#111');
+            gradient.addColorStop(1, '#333');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 600, 400);
+
+            // Title text
+            ctx.font = 'bold 48px Arial';
+            ctx.fillStyle = '#00ffaa';
+            ctx.textAlign = 'center';
+            ctx.fillText('world-world', 300, 180);
+
+            // Subtitle
+            ctx.font = '24px Arial';
+            ctx.fillStyle = '#888';
+            ctx.fillText('Edit GitHub repos on the go', 300, 240);
+
+            // Convert to base64 (remove data:image/png;base64, prefix)
+            const base64 = canvas.toDataURL('image/png').split(',')[1];
+
+            status.innerHTML = '<p>Uploading to GitHub...</p>';
+
+            // Upload to GitHub
+            try {
+                const response = await fetch('/commit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: base64,
+                        filePath: 'og-image.png'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.error) {
+                    status.innerHTML = `<p>Error: ${result.error}</p>`;
+                } else {
+                    status.innerHTML = `<p>✅ ${result.success} Image URL: https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png</p>`;
+                }
+            } catch (error) {
+                status.innerHTML = `<p>Error: ${error.message}</p>`;
             }
         }
     </script>
