@@ -9,7 +9,7 @@ export default function handler(request) {
   try {
     const { searchParams } = new URL(request.url);
     const text = searchParams.get('text') || 'world-world';
-    
+
     return new ImageResponse(
       (
         <div
@@ -59,4 +59,3 @@ export default function handler(request) {
     });
   }
 }
-

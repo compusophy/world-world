@@ -45,7 +45,7 @@
     },
     {
       "src": "/api/og",
-      "dest": "/api/og.js"
+      "dest": "/og"
     },
     {
       "src": "/(.*)",
