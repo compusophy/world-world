@@ -1,13 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configure multer for file uploads
+const upload = multer({ storage: multer.memoryStorage() });
+
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, '..')));
 
 // Simple favicon handler
@@ -88,7 +93,7 @@ app.post('/commit', async (req, res) => {
         // Create or update file
         const requestBody = {
             message: currentSha ? `Update ${filePath || 'index.html'} from web editor` : `Create ${filePath || 'index.html'} from web editor`,
-            content: content // Content is already base64 from the frontend
+            content: Buffer.from(content).toString('base64')
         };
         
         // Only include SHA if updating existing file
@@ -410,6 +415,43 @@ app.get('/prs', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.send(`<p>Error: ${error.message}</p>`);
+    }
+});
+
+// Save image endpoint
+app.post('/save-image', upload.single('image'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.json({ error: 'No image provided' });
+        }
+
+        const publicDir = path.join(__dirname, '..', 'public');
+        if (!fs.existsSync(publicDir)) {
+            fs.mkdirSync(publicDir, { recursive: true });
+        }
+
+        const imagePath = path.join(publicDir, 'og-image.jpg');
+        fs.writeFileSync(imagePath, req.file.buffer);
+
+        res.json({ success: 'Image saved successfully!' });
+    } catch (error) {
+        console.error(error);
+        res.json({ error: error.message });
+    }
+});
+
+// Serve OG image with no-cache headers
+app.get('/img', (req, res) => {
+    const imagePath = path.join(__dirname, '..', 'public', 'og-image.jpg');
+    
+    if (fs.existsSync(imagePath)) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.sendFile(imagePath);
+    } else {
+        res.status(404).send('Image not found');
     }
 });
 

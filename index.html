@@ -4,9 +4,9 @@
     <title>world-world editor</title>
     
     <!-- Farcaster Mini App Meta Tags -->
-    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg?v=1","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg?v=1","splashBackgroundColor":"#111111"}}}' />
+    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://world-world.vercel.app/img","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://world-world.vercel.app/img","splashBackgroundColor":"#111111"}}}' />
     <!-- For backward compatibility -->
-    <meta name="fc:frame" content='{"version":"1","imageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg?v=1","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg?v=1","splashBackgroundColor":"#111111"}}}' />
+    <meta name="fc:frame" content='{"version":"1","imageUrl":"https://world-world.vercel.app/img","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://world-world.vercel.app/img","splashBackgroundColor":"#111111"}}}' />
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
@@ -124,31 +124,29 @@
             const canvas = document.getElementById('og-canvas');
             const status = document.getElementById('status');
             
-            status.innerHTML = '<p>Uploading to GitHub...</p>';
+            status.innerHTML = '<p>Saving image...</p>';
 
-            // Convert to JPEG with compression (much smaller than PNG)
-            // Quality 0.8 = good balance between size and quality
-            const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            // Convert to JPEG
+            canvas.toBlob(async (blob) => {
+                try {
+                    const formData = new FormData();
+                    formData.append('image', blob, 'og-image.jpg');
+                    
+                    const response = await fetch('/save-image', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-            try {
-                const response = await fetch('/commit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: base64,
-                        filePath: 'og-image.jpg'
-                    })
-                });
-
-                const result = await response.json();
-                if (result.error) {
-                    status.innerHTML = `<p>Error: ${result.error}</p>`;
-                } else {
-                    status.innerHTML = `<p>✅ ${result.success}<br>Image URL: https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg</p>`;
+                    const result = await response.json();
+                    if (result.error) {
+                        status.innerHTML = `<p>Error: ${result.error}</p>`;
+                    } else {
+                        status.innerHTML = `<p>✅ Image saved!<br>URL: https://world-world.vercel.app/img?v=${Date.now()}</p>`;
+                    }
+                } catch (error) {
+                    status.innerHTML = `<p>Error: ${error.message}</p>`;
                 }
-            } catch (error) {
-                status.innerHTML = `<p>Error: ${error.message}</p>`;
-            }
+            }, 'image/jpeg', 0.8);
         }
 
         // Generate initial preview on load
