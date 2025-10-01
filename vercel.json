@@ -44,10 +44,6 @@
       "dest": "/api/index.js"
     },
     {
-      "src": "/api/og",
-      "dest": "/og"
-    },
-    {
       "src": "/(.*)",
       "dest": "/$1"
     }
