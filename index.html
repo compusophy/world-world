@@ -4,10 +4,9 @@
     <title>world-world editor</title>
     
     <!-- Farcaster Mini App Meta Tags -->
-    <!-- TODO: Upload og-image.png to GitHub and replace this URL -->
-    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png","splashBackgroundColor":"#111111"}}}' />
+    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg","splashBackgroundColor":"#111111"}}}' />
     <!-- For backward compatibility -->
-    <meta name="fc:frame" content='{"version":"1","imageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png","splashBackgroundColor":"#111111"}}}' />
+    <meta name="fc:frame" content='{"version":"1","imageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg","button":{"title":"🌍 Open Editor","action":{"type":"launch_frame","name":"world-world","url":"https://world-world.vercel.app/","splashImageUrl":"https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg","splashBackgroundColor":"#111111"}}}' />
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
@@ -127,8 +126,9 @@
             
             status.innerHTML = '<p>Uploading to GitHub...</p>';
 
-            // Convert to base64 (remove data:image/png;base64, prefix)
-            const base64 = canvas.toDataURL('image/png').split(',')[1];
+            // Convert to JPEG with compression (much smaller than PNG)
+            // Quality 0.8 = good balance between size and quality
+            const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
             try {
                 const response = await fetch('/commit', {
@@ -136,7 +136,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         content: base64,
-                        filePath: 'og-image.png'
+                        filePath: 'og-image.jpg'
                     })
                 });
 
@@ -144,7 +144,7 @@
                 if (result.error) {
                     status.innerHTML = `<p>Error: ${result.error}</p>`;
                 } else {
-                    status.innerHTML = `<p>✅ ${result.success}<br>Image URL: https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png</p>`;
+                    status.innerHTML = `<p>✅ ${result.success}<br>Image URL: https://raw.githubusercontent.com/compusophy/world-world/main/og-image.jpg</p>`;
                 }
             } catch (error) {
                 status.innerHTML = `<p>Error: ${error.message}</p>`;
