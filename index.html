@@ -56,7 +56,11 @@
 
     <hr>
     <h3>OG Image Generator</h3>
-    <button onclick="generateAndUploadOGImage()">generate & upload og-image.png</button>
+    <input type="text" id="og-text" placeholder="Enter text for image" value="world-world">
+    <button onclick="generateOGImage()">generate preview</button>
+    <button onclick="uploadOGImage()">upload to github</button>
+    <br>
+    <canvas id="og-canvas" width="600" height="400" style="border:1px solid #ccc; margin:10px 0;"></canvas>
 
     <div id="status"></div>
 
@@ -87,15 +91,13 @@
             }
         }
 
-        async function generateAndUploadOGImage() {
-            const status = document.getElementById('status');
-            status.innerHTML = '<p>Generating image...</p>';
-
-            // Create canvas
-            const canvas = document.createElement('canvas');
-            canvas.width = 600;
-            canvas.height = 400;
+        function generateOGImage() {
+            const canvas = document.getElementById('og-canvas');
             const ctx = canvas.getContext('2d');
+            const text = document.getElementById('og-text').value || 'world-world';
+
+            // Clear canvas
+            ctx.clearRect(0, 0, 600, 400);
 
             // Background gradient
             const gradient = ctx.createLinearGradient(0, 0, 600, 400);
@@ -104,23 +106,30 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 600, 400);
 
-            // Title text
+            // Title text (dynamic)
             ctx.font = 'bold 48px Arial';
             ctx.fillStyle = '#00ffaa';
             ctx.textAlign = 'center';
-            ctx.fillText('world-world', 300, 180);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 300, 180);
 
             // Subtitle
             ctx.font = '24px Arial';
             ctx.fillStyle = '#888';
             ctx.fillText('Edit GitHub repos on the go', 300, 240);
 
+            document.getElementById('status').innerHTML = '<p>✅ Image generated! Change the text and click generate again, or upload to GitHub.</p>';
+        }
+
+        async function uploadOGImage() {
+            const canvas = document.getElementById('og-canvas');
+            const status = document.getElementById('status');
+            
+            status.innerHTML = '<p>Uploading to GitHub...</p>';
+
             // Convert to base64 (remove data:image/png;base64, prefix)
             const base64 = canvas.toDataURL('image/png').split(',')[1];
 
-            status.innerHTML = '<p>Uploading to GitHub...</p>';
-
-            // Upload to GitHub
             try {
                 const response = await fetch('/commit', {
                     method: 'POST',
@@ -135,12 +144,15 @@
                 if (result.error) {
                     status.innerHTML = `<p>Error: ${result.error}</p>`;
                 } else {
-                    status.innerHTML = `<p>✅ ${result.success} Image URL: https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png</p>`;
+                    status.innerHTML = `<p>✅ ${result.success}<br>Image URL: https://raw.githubusercontent.com/compusophy/world-world/main/og-image.png</p>`;
                 }
             } catch (error) {
                 status.innerHTML = `<p>Error: ${error.message}</p>`;
             }
         }
+
+        // Generate initial preview on load
+        window.addEventListener('load', generateOGImage);
     </script>
     
     <!-- Farcaster Mini App SDK -->
